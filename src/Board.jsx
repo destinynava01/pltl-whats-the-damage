@@ -63,7 +63,7 @@ export default function Board({ session, onLobby, onNewGame }) {
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-mustard">join code {session.joinCode}</p>
           <h1 className="chalk mt-1 text-5xl">🌮 {SITE_NAME}</h1>
-          <p className="text-sm text-chalk/70">{board.game.orders} orders · {mode?.name}</p>
+          <p className="text-sm text-chalk/70">{board.game.orders} orders · {mode?.name}{board.game.jumpstart ? ' · 🚀 Jumpstart mode' : ''}</p>
         </div>
         {left !== null && (
           <div className={`rounded-2xl bg-card px-5 py-2 text-center shadow-lg ${left < 120000 ? 'shake' : ''}`} key={left < 120000 ? Math.floor(left / 10000) : 'clock'}>

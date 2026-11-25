@@ -33,6 +33,7 @@ export default function Results({ session, onNewGame, onLobby }) {
       <Card awning className="mx-auto max-w-4xl text-center">
         <p className="mt-2"><span className="paid thunk text-3xl">Closed for the night</span></p>
         <h1 className="mt-4 font-display text-5xl text-accent">The Final Tab</h1>
+        {report.jumpstart && <p className="mt-1 text-sm font-bold text-info">🚀 Jumpstart mode</p>}
 
         <ol className="mx-auto mt-6 max-w-2xl space-y-3 text-left">
           {ranked.map((t, i) => (

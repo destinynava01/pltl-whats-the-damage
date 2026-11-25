@@ -20,6 +20,7 @@ export default function Lobby({ onStart, onOpenBoard, hasGame, resume, onCloseGa
   const [duration, setDuration] = useState(30)
   const [mode, setMode] = useState('mix')
   const [orderCount, setOrderCount] = useState(6)
+  const [jumpstart, setJumpstart] = useState(false) // Jumpstart mode (the corequisite sections)
   const [players, setPlayers] = useState([])
   const [busy, setBusy] = useState(false)
   const [guide, setGuide] = useState(false) // the how-to guide, shown when Start is pressed (before the clock starts)
@@ -52,7 +53,7 @@ export default function Lobby({ onStart, onOpenBoard, hasGame, resume, onCloseGa
   const finalize = () => run(async () => { await call({ action: 'set_teams', team_names: teamNames.map((_, i) => teamLabel(i)) }); setFinalized(true) })
   const studentAction = (payload) => run(async () => { await call(payload); setPlayers((await call({ action: 'list_players' })).players) })
   const start = () => run(async () => {
-    await call({ action: 'start_game', team_names: teamNames.map((_, i) => teamLabel(i)), duration_min: duration, mode, order_count: orderCount })
+    await call({ action: 'start_game', team_names: teamNames.map((_, i) => teamLabel(i)), duration_min: duration, mode, order_count: orderCount, jumpstart })
     onStart(session)
   })
 
@@ -136,6 +137,17 @@ export default function Lobby({ onStart, onOpenBoard, hasGame, resume, onCloseGa
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   {ORDER_COUNTS.map((n) => <button key={n} type="button" className={choice(orderCount === n)} onClick={() => setOrderCount(n)}>{n}</button>)}
                 </div>
+              </div>
+              <div>
+                <Label>Jumpstart mode</Label>
+                <button type="button" aria-pressed={jumpstart} onClick={() => setJumpstart(!jumpstart)}
+                  className={`mt-2 flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2 text-left transition ${jumpstart ? 'border-info bg-info-soft' : 'border-line bg-panel hover:bg-hover'}`}>
+                  <span className={`flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition ${jumpstart ? 'justify-end bg-info' : 'justify-start bg-line'}`}><span className="h-5 w-5 rounded-full bg-white shadow" /></span>
+                  <span className="text-sm">
+                    <b>🚀 {jumpstart ? 'On' : 'Off'}</b>
+                    <span className="block text-xs text-muted">For Jumpstart sections: friendlier numbers (quantities 1–3, prices in 50¢ steps), a worked first step on every order, a hint after one miss, and &ldquo;show the answer&rdquo; after two.</span>
+                  </span>
+                </button>
               </div>
               <div>
                 <Label>Clock</Label>

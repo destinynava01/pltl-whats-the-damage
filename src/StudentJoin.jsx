@@ -201,10 +201,11 @@ function OrderTrack({ s }) {
 // The current step: the receipts and the answer form (prices), or the new order and its total (damage)
 function Task({ s, order, lead, busy, canReveal, onAnswer, onReveal }) {
   const isLead = lead?.me
-  const [asSystem, setAsSystem] = useState(false)
+  // Jumpstart shows the receipts as equations from the start
+  const [asSystem, setAsSystem] = useState(Boolean(order.jumpstart))
   return (
     <Card awning>
-      <Label>Order {s.order + 1} of {s.orders} · {order.truck}</Label>
+      <Label>Order {s.order + 1} of {s.orders} · {order.truck}{order.jumpstart ? ' · 🚀 Jumpstart' : ''}</Label>
       <h2 className="mt-1 font-display text-2xl">{s.kind === 'prices' ? 'Find the prices' : "What's the damage?"}</h2>
 
       {s.kind === 'prices' ? (
@@ -222,10 +223,15 @@ function Task({ s, order, lead, busy, canReveal, onAnswer, onReveal }) {
               ))}
             </div>
           )}
+          {order.guide && <p className="mt-3 rounded-xl border-2 border-info bg-info-soft px-3 py-2 text-sm"><b className="text-info">🚀 First step:</b> {order.guide}</p>}
+          {order.hint && <p className="pop mt-2 rounded-xl border-2 border-mustard bg-warn-soft px-3 py-2 text-sm font-semibold">💡 {order.hint}</p>}
           <PriceForm order={order} isLead={isLead} busy={busy} onAnswer={onAnswer} />
         </>
       ) : (
-        <DamageForm order={order} isLead={isLead} busy={busy} onAnswer={onAnswer} />
+        <>
+          <DamageForm order={order} isLead={isLead} busy={busy} onAnswer={onAnswer} />
+          {order.hint && <p className="pop mt-3 rounded-xl border-2 border-mustard bg-warn-soft px-3 py-2 text-sm font-semibold">💡 {order.hint}</p>}
+        </>
       )}
 
       <div className="mt-4 rounded-xl bg-panel px-3 py-2 text-sm">
