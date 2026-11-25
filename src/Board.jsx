@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import HowToPlay from './HowToPlay'
 import { SLIDES as HOW_TO_SLIDES } from './howToSlides'
 import { wdGame, watchGame } from './api'
+import Peek from './Peek'
 import Results from './Results'
 import { clockText, MODES, SITE_NAME } from './config'
 import { playClosed, playSolved, playWrong, setSoundOn, soundOn } from './sounds'
@@ -16,6 +17,7 @@ export default function Board({ session, onLobby, onNewGame }) {
   const [busy, setBusy] = useState(false)
   const [sound, setSound] = useState(soundOn)
   const [now, setNow] = useState(() => Date.now())
+  const [peek, setPeek] = useState(null) // the team the leader is peeking at
   const last = useRef(null)
 
   const call = useCallback((payload) => wdGame({ ...payload, game_id: session.gameId, host_token: session.hostToken }), [session])
@@ -82,13 +84,14 @@ export default function Board({ session, onLobby, onNewGame }) {
       {error && <p className="mx-auto mt-3 max-w-7xl rounded-xl bg-card px-3 py-2 font-bold text-bad">{error}</p>}
 
       <section className={`mx-auto mt-8 grid max-w-7xl gap-6 ${board.teams.length > 1 ? 'md:grid-cols-2' : ''} ${board.teams.length > 2 ? 'xl:grid-cols-3' : ''}`}>
-        {board.teams.map((t) => <Truck key={t.index} team={t} serverNow={serverNow} />)}
+        {board.teams.map((t) => <Truck key={t.index} team={t} serverNow={serverNow} onPeek={() => setPeek({ index: t.index, name: t.name })} />)}
       </section>
+      {peek && <Peek call={call} team={peek} stamp={board} onClose={() => setPeek(null)} />}
     </main>
   )
 }
 
-function Truck({ team, serverNow }) {
+function Truck({ team, serverNow, onPeek }) {
   const s = team.shift
   if (!s) return null
   const e = team.last_event
@@ -130,7 +133,10 @@ function Truck({ team, serverNow }) {
             <p className="text-sm">
               <b>Order {s.order + 1}:</b> {s.kind === 'prices' ? `solving ${current.items.length} prices (${current.items.map((it) => it.emoji).join(' ')})` : 'ringing up the damage'}
             </p>
-            <p className="text-sm">🧑‍🍳 Lead solver: <b>{team.lead ?? '…'}</b>{s.misses ? <span className="text-bad"> · {s.misses} wrong tr{s.misses === 1 ? 'y' : 'ies'}</span> : ''}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm">🧑‍🍳 Lead solver: <b>{team.lead ?? '…'}</b>{s.misses ? <span className="text-bad"> · {s.misses} wrong tr{s.misses === 1 ? 'y' : 'ies'}</span> : ''}</p>
+              <button type="button" onClick={onPeek} className="shrink-0 rounded-lg border-2 border-line bg-panel px-2 py-1 text-xs font-bold text-info hover:bg-hover" aria-label={`Peek at ${team.name}'s order`}>👀 Peek</button>
+            </div>
           </>
         )}
         {fresh && !s.finished && (
