@@ -91,6 +91,7 @@ export default function Lobby({ onStart, onOpenBoard, hasGame, resume, onCloseGa
             <div className="mt-5 flex flex-col items-center">
               <div className="rounded-xl bg-white p-4 shadow"><QRCodeSVG value={joinUrl} size={200} title={`Join code ${session.joinCode}`} /></div>
               <p className="mt-3 text-center text-sm text-muted">Students scan this with their phone camera to join.</p>
+              <p className="mt-3 rounded-lg border-2 border-dashed border-warn bg-warn-soft px-3 py-2 text-center text-sm font-bold text-warn">📝 Tell students to grab scratch paper for solving the systems of equations.</p>
             </div>
           )}
           <div className="mt-6 rounded-xl border-2 border-dashed border-line p-4 text-sm">
