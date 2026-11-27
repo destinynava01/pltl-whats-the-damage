@@ -61,7 +61,7 @@ function JoinForm({ onJoined, notice }) {
         </div>
         <div>
           <Label>Your name</Label>
-          <input className={`${field} mt-2`} maxLength={40} placeholder="Maria G." value={name} onChange={(e) => setName(e.target.value)} required />
+          <input className={`${field} mt-2`} maxLength={40} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <Button className="w-full" disabled={busy || code.length < 6 || !name.trim()}>{busy ? 'Clocking in…' : 'Join'}</Button>
         {error && <p className="font-bold text-bad">{error}</p>}
