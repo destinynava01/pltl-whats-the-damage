@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { wdGame } from './api'
 import { Button, Card, Label } from './ui'
+import ReportProblem from './ReportProblem'
 
 // After the game: teams ranked by points, and each team's orders with every system, its answer and the wrong tries
 // (each team had its own), and the results download.
 export default function Results({ session, onNewGame, onLobby }) {
+  const reportCall = (payload) => wdGame({ ...payload, game_id: session.gameId, host_token: session.hostToken })
   const [report, setReport] = useState(null)
   const [error, setError] = useState('')
   const [open, setOpen] = useState(null)
@@ -58,6 +60,7 @@ export default function Results({ session, onNewGame, onLobby }) {
                       <Label className="mt-1">Answer</Label>
                       <p className="font-mono">{s.answer}</p>
                       {s.wrong > 0 && <p className="mt-1 text-bad">{s.wrong} wrong tr{s.wrong === 1 ? 'y' : 'ies'}</p>}
+                      <ReportProblem call={reportCall} location={`${t.name} · Order ${s.order}: ${s.title}`} question={s.system ?? ''} answer={s.answer} className="mt-2" />
                     </li>
                   ))}
                 </ol>
