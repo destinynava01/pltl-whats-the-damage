@@ -8,6 +8,7 @@ import { readSession, saveSession } from './session'
 import { isConfigured } from './supabase'
 import { Button, CenterCard } from './ui'
 import ScenarioSubmit, { ScenarioReviewPage } from './Scenarios'
+import { SLIDES as LANDING_SLIDES } from './howToSlides'
 
 // Routes:
 //   /        leader: landing -> lobby -> board (the projector)
@@ -75,6 +76,7 @@ function LeaderApp() {
     return (
       <CenterCard title={SITE_NAME}>
         <p className="mt-2 font-display text-lg text-info">{SITE_TAGLINE}</p>
+        <div className="mt-6 flex justify-center text-left [&>*]:max-w-full">{LANDING_SLIDES[0].art}</div>
         <p className="mt-3 text-muted">
           Every order is a system of equations. Old receipts give the totals; teams solve for each item&apos;s price, then
           work out the bill for the next customer: the damage.
