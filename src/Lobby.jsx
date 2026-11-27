@@ -72,7 +72,7 @@ export default function Lobby({ onStart, onOpenBoard, hasGame, resume, onCloseGa
         <h1 className="chalk mt-2 text-5xl">Leader Lobby</h1>
         <p className="mt-2 text-chalk/80">Set up the teams, pick the orders, then open the window.</p>
         <p className="mt-2 text-sm font-bold">
-          <a href={HUB_URL} className="text-mustard hover:underline">← All games</a>
+          <a href={HUB_URL} className="text-mustard hover:underline">← All games</a><span className="mx-2 opacity-50">·</span><a href="/scenarios" className="text-mustard hover:underline">Submit scenarios</a><span className="mx-2 opacity-50">·</span><a href="/review" className="text-mustard hover:underline">Review queue</a>
         </p>
         <div className="mt-6">
           {session ? (
