@@ -215,7 +215,11 @@ function LivePreview({ draft }) {
 // /scenarios: write a scenario and send it for review
 export default function ScenarioSubmit() {
   const { game, error } = useThisGame()
-  const [draft, setDraft] = useState(blank)
+  // "Reword this step" on the review page opens the form on that round and step
+  const [draft, setDraft] = useState(() => {
+    const q = new URLSearchParams(window.location.search)
+    return { ...blank(), round: q.get('round') ?? '', step_key: q.get('step') ?? '' }
+  })
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -321,6 +325,7 @@ function ReviewList({ email }) {
   const [reload, setReload] = useState(0)
   const done = useCallback(() => setReload((n) => n + 1), [])
   useEffect(() => {
+    if (status === 'builtin') return
     review({ action: 'list_scenarios', status }, 'Could not load scenarios.')
       .then((d) => { setRows(d.scenarios.filter((r) => r.game === SCENARIO_GAME)); setError('') })
       .catch((e) => setError(e.message))
@@ -332,14 +337,73 @@ function ReviewList({ email }) {
           {['pending', 'approved', 'rejected', 'retired'].map((st) => (
             <button key={st} type="button" onClick={() => setStatus(st)} className={`rounded-full px-3 py-1 text-sm font-bold capitalize ${status === st ? 'bg-accent text-on-accent' : 'bg-panel hover:bg-hover'}`}>{st}</button>
           ))}
+          <button type="button" onClick={() => setStatus('builtin')} className={`rounded-full px-3 py-1 text-sm font-bold ${status === 'builtin' ? 'bg-accent text-on-accent' : 'bg-panel hover:bg-hover'}`}>⚙️ Built in</button>
         </div>
         <p className="text-sm text-muted">{email} · <button type="button" onClick={() => supabase.auth.signOut()} className="font-bold text-accent">Sign out</button> · <a href="/scenarios" className="font-bold text-accent">Write one</a></p>
       </div>
-      {(error || catalogError) && <p className="rounded-lg bg-bad-soft px-3 py-2 text-bad">{error || catalogError}</p>}
-      {!rows && !error && <p className="text-muted">Loading…</p>}
-      {rows?.length === 0 && <p className="paper border border-line bg-card rounded-xl p-4 text-muted">Nothing {status} right now.</p>}
-      <div className="space-y-4">{game && rows?.map((row) => <ScenarioCard key={row.id} row={row} game={game} onDone={done} />)}</div>
+      {status === 'builtin' ? <BuiltIn /> : (
+        <>
+          {(error || catalogError) && <p className="rounded-lg bg-bad-soft px-3 py-2 text-bad">{error || catalogError}</p>}
+          {!rows && !error && <p className="text-muted">Loading…</p>}
+          {rows?.length === 0 && <p className="paper border border-line bg-card rounded-xl p-4 text-muted">Nothing {status} right now.</p>}
+          <div className="space-y-4">{game && rows?.map((row) => <ScenarioCard key={row.id} row={row} game={game} onDone={done} />)}</div>
+        </>
+      )}
     </Page>
+  )
+}
+
+// The game's own content: a freshly generated example of every kind of step, round by round. Every game makes new
+// numbers each time, so 🎲 shows another example; "Reword it" opens the scenario form on that step.
+function BuiltIn() {
+  const [rounds, setRounds] = useState(null)
+  const [error, setError] = useState('')
+  const [spin, setSpin] = useState(0)
+  useEffect(() => {
+    scenarios({ action: 'samples', game: SCENARIO_GAME }).then((d) => { setRounds(d.rounds); setError('') }).catch((e) => setError(e.message))
+  }, [spin])
+  async function reroll(roundId, key) {
+    try {
+      const d = await scenarios({ action: 'samples', game: SCENARIO_GAME, round: roundId, step_key: key })
+      const fresh = d.rounds[0]?.steps[0]
+      if (fresh) setRounds((rs) => rs.map((r) => (r.id !== roundId ? r : { ...r, steps: r.steps.map((s) => (s.key === key ? fresh : s)) })))
+    } catch (e) { setError(e.message) }
+  }
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="max-w-2xl text-sm text-muted">What {SITE_NAME} already makes on its own: one example of every kind of step, with fresh numbers each time. Nothing here needs approving. Spot something wrong? Use &quot;Report a problem&quot; during a game, or write a scenario that rewords it.</p>
+        <button type="button" onClick={() => setSpin(spin + 1)} className="rounded-lg border border-line bg-panel px-3 py-1.5 text-sm font-bold hover:bg-hover">🎲 New examples</button>
+      </div>
+      {error && <p className="rounded-lg bg-bad-soft px-3 py-2 text-bad">{error}</p>}
+      {!rounds && !error && <p className="text-muted">Generating…</p>}
+      {rounds?.map((r) => (
+        <section key={r.id}>
+          <h2 className="mb-2 font-display text-2xl font-bold text-accent">{r.title}</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {r.steps.map((s) => (
+              <article key={s.key} className="paper border border-line bg-card space-y-2 rounded-xl p-4 text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted">{s.label}</p>
+                  <button type="button" onClick={() => reroll(r.id, s.key)} title="Another example" className="shrink-0 rounded-md border border-line bg-panel px-2 py-0.5 text-xs font-bold hover:bg-hover">🎲</button>
+                </div>
+                {s.error ? <p className="text-bad">{s.error}</p> : (
+                  <>
+                    <p className="text-base font-bold">{s.title}</p>
+                    {s.visual && <p className="rounded-lg border border-dashed border-line px-2 py-2 text-center text-xs text-muted">({s.visual} shows here)</p>}
+                    <p className="whitespace-pre-wrap">{s.prompt}</p>
+                    <div className="rounded-lg bg-ok-soft px-2 py-1.5 text-ok"><b>Answer:</b> {s.answer || '—'}</div>
+                    {s.hint && <p className="text-xs text-warn"><b>Hint:</b> {s.hint}</p>}
+                    {s.explain && <p className="text-xs text-muted"><b>After it&apos;s solved:</b> {s.explain}</p>}
+                  </>
+                )}
+                <a href={`/scenarios?round=${encodeURIComponent(r.id)}&step=${encodeURIComponent(s.key)}`} className="inline-block text-xs font-bold text-accent hover:underline">✍️ Reword this step</a>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
   )
 }
 
