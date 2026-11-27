@@ -207,6 +207,7 @@ function Task({ s, order, lead, busy, canReveal, onAnswer, onReveal }) {
     <Card awning>
       <Label>Order {s.order + 1} of {s.orders} · {order.truck}{order.jumpstart ? ' · 🚀 Jumpstart' : ''}</Label>
       <h2 className="mt-1 font-display text-2xl">{s.kind === 'prices' ? 'Find the prices' : "What's the damage?"}</h2>
+      {order.story && <div className="mt-2 rounded-lg border-2 border-dashed border-line px-3 py-2 text-sm">{order.story.title && <p className="font-bold">{order.story.title}</p>}<p>{order.story.text}</p></div>}
 
       {s.kind === 'prices' ? (
         <>

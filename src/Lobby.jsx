@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import HowToPlay from './HowToPlay'
 import { SLIDES as HOW_TO_SLIDES } from './howToSlides'
-import { wdGame, watchGame } from './api'
+import { callFunction, wdGame, watchGame } from './api'
+// Where leaders write scenarios: this game's own page
 import { DURATIONS, HUB_URL, MAX_TEAMS, MIN_TEAMS, MODES, ORDER_COUNTS, SITE_NAME, TEAM_COLORS } from './config'
 import { saveSession } from './session'
 import { Button, Card, Label } from './ui'
@@ -18,6 +19,7 @@ export default function Lobby({ onStart, onOpenBoard, hasGame, resume, onCloseGa
   const [teamNames, setTeamNames] = useState(resume?.teams?.length ? resume.teams : ['Team 1', 'Team 2'])
   const [finalized, setFinalized] = useState(Boolean(resume?.finalized))
   const [duration, setDuration] = useState(30)
+  const [useScenarios, setUseScenarios] = useState(false)
   const [mode, setMode] = useState('mix')
   const [orderCount, setOrderCount] = useState(6)
   const [jumpstart, setJumpstart] = useState(false) // Jumpstart mode (the corequisite sections)
@@ -53,7 +55,7 @@ export default function Lobby({ onStart, onOpenBoard, hasGame, resume, onCloseGa
   const finalize = () => run(async () => { await call({ action: 'set_teams', team_names: teamNames.map((_, i) => teamLabel(i)) }); setFinalized(true) })
   const studentAction = (payload) => run(async () => { await call(payload); setPlayers((await call({ action: 'list_players' })).players) })
   const start = () => run(async () => {
-    await call({ action: 'start_game', team_names: teamNames.map((_, i) => teamLabel(i)), duration_min: duration, mode, order_count: orderCount, jumpstart })
+    await call({ action: 'start_game', team_names: teamNames.map((_, i) => teamLabel(i)), duration_min: duration, mode, order_count: orderCount, jumpstart, scenarios: useScenarios })
     onStart(session)
   })
 
@@ -157,6 +159,7 @@ export default function Lobby({ onStart, onOpenBoard, hasGame, resume, onCloseGa
                 </div>
                 <p className="mt-1 text-xs text-muted">When time runs out, every team scores what it has solved. With no clock, it ends when every team has served every order (or you end it).</p>
               </div>
+              <ScenarioToggle game="whatsthedamage" on={useScenarios} onChange={setUseScenarios} />
               {emptyTeams.length > 0 && <p className="text-sm font-bold text-bad">Every team needs at least one student. Still empty: {emptyTeams.map(teamLabel).join(', ')}.</p>}
               <Button className="w-full" disabled={busy || emptyTeams.length > 0} onClick={() => (duration && !howToSkipped() ? setGuide(true) : start())}>
                 {busy ? 'Firing up the grill…' : '🌮 Open the window'}
@@ -224,3 +227,27 @@ function howToSkipped() {
     return false
   }
 }
+
+// "Use leader scenarios": approved scenarios (written on the Write a scenario page and approved by a reviewer) reword
+// up to one step per round, with each team's own generated numbers, or add a leader's own question
+function ScenarioToggle({ game, on, onChange }) {
+  const [count, setCount] = useState(null)
+  useEffect(() => {
+    callFunction('scenarios', { action: 'count', game }, 'Could not check the scenarios.').then((d) => setCount(d.approved)).catch(() => setCount(0))
+  }, [game])
+  const none = count === 0
+  return (
+    <div>
+      <Label>Leader scenarios</Label>
+      <label className={`mt-2 flex items-start gap-3 rounded-lg border px-3 py-2 text-sm ${none ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${on && !none ? 'border-accent bg-accent-soft' : 'border-line bg-panel hover:bg-hover'}`}>
+        <input type="checkbox" checked={on && !none} disabled={none} onChange={(e) => onChange(e.target.checked)} className="mt-1 h-4 w-4" />
+        <span className="flex-1">
+          <b>✍️ Use leader scenarios</b> <span className="text-muted">({count === null ? '…' : `${count} approved`})</span>
+          <span className="block text-muted">Up to one step per round gets a leader&apos;s wording (still with each team&apos;s own numbers), or a leader&apos;s own question.</span>
+        </span>
+      </label>
+      <a href="/scenarios" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-bold text-accent hover:underline">✍️ Write a scenario for this game</a>
+    </div>
+  )
+}
+

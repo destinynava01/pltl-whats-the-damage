@@ -22,3 +22,7 @@ export function clockText(ms) {
 
 // "2🌮 + 1🥤" for a receipt's quantities
 export const lineOf = (items, qty) => items.map((it, i) => (qty[i] ? `${qty[i]} ${it.emoji}` : '')).filter(Boolean).join(' + ')
+
+// Leader scenarios (the /scenarios and /review pages): this game's id, and the pages' background
+export const SCENARIO_GAME = 'whatsthedamage'
+export const PAGE_BG = 'bg-board'

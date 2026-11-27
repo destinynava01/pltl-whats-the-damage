@@ -7,6 +7,7 @@ import { HUB_URL, SITE_NAME, SITE_TAGLINE } from './config'
 import { readSession, saveSession } from './session'
 import { isConfigured } from './supabase'
 import { Button, CenterCard } from './ui'
+import ScenarioSubmit, { ScenarioReviewPage } from './Scenarios'
 
 // Routes:
 //   /        leader: landing -> lobby -> board (the projector)
@@ -16,6 +17,8 @@ function App() {
   const path = window.location.pathname.replace(/\/+$/, '')
   if (!isConfigured) return <NotConfigured />
   if (path === '/join') return <StudentJoin />
+  if (path === '/scenarios') return <ScenarioSubmit />
+  if (path === '/review') return <ScenarioReviewPage />
   return <LeaderApp />
 }
 
