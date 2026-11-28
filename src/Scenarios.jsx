@@ -3,12 +3,13 @@ import { callFunction } from './api'
 import { PAGE_BG, SCENARIO_GAME, SITE_NAME } from './config'
 import { supabase } from './supabase'
 import { useSession } from './useSession'
+import GameReports from './GameReports'
 
 // Leader scenarios for this game. /scenarios: a leader rewords one kind of generated step (tapping slot buttons to
 // drop in {slots} the game fills with each team's own generated content) or writes a question of their own, with a
 // live preview filled with fresh generated content. /review: reviewers sign in with their @utrgv.edu email and
 // approve, edit, reject or retire this game's scenarios. Approved ones are used when the lobby's "Use leader
-// scenarios" is on. The same file is in every game with built-in content; it only uses the color names every
+// scenarios" is on. The 🚩 Problem reports tab lists what leaders reported from this game. The same file is in every game with built-in content; it only uses the color names every
 // game's theme has, and config.js names the game (SCENARIO_GAME) and the page background (PAGE_BG).
 
 const scenarios = (payload, fallback = 'Could not reach the scenarios service.') => callFunction('scenarios', payload, fallback)
@@ -325,7 +326,7 @@ function ReviewList({ email }) {
   const [reload, setReload] = useState(0)
   const done = useCallback(() => setReload((n) => n + 1), [])
   useEffect(() => {
-    if (status === 'builtin') return
+    if (status === 'builtin' || status === 'reports') return
     review({ action: 'list_scenarios', status }, 'Could not load scenarios.')
       .then((d) => { setRows(d.scenarios.filter((r) => r.game === SCENARIO_GAME)); setError('') })
       .catch((e) => setError(e.message))
@@ -338,10 +339,11 @@ function ReviewList({ email }) {
             <button key={st} type="button" onClick={() => setStatus(st)} className={`rounded-full px-3 py-1 text-sm font-bold capitalize ${status === st ? 'bg-accent text-on-accent' : 'bg-panel hover:bg-hover'}`}>{st}</button>
           ))}
           <button type="button" onClick={() => setStatus('builtin')} className={`rounded-full px-3 py-1 text-sm font-bold ${status === 'builtin' ? 'bg-accent text-on-accent' : 'bg-panel hover:bg-hover'}`}>⚙️ Built in</button>
+          <button type="button" onClick={() => setStatus('reports')} className={`rounded-full px-3 py-1 text-sm font-bold ${status === 'reports' ? 'bg-accent text-on-accent' : 'bg-panel hover:bg-hover'}`}>🚩 Problem reports</button>
         </div>
         <p className="text-sm text-muted">{email} · <button type="button" onClick={() => supabase.auth.signOut()} className="font-bold text-accent">Sign out</button> · <a href="/scenarios" className="font-bold text-accent">Write one</a></p>
       </div>
-      {status === 'builtin' ? <BuiltIn /> : (
+      {status === 'reports' ? <GameReports call={review} game={SCENARIO_GAME} /> : status === 'builtin' ? <BuiltIn /> : (
         <>
           {(error || catalogError) && <p className="rounded-lg bg-bad-soft px-3 py-2 text-bad">{error || catalogError}</p>}
           {!rows && !error && <p className="text-muted">Loading…</p>}
